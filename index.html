@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="estilos.css">
+    <title>Space Invaders</title>
+</head>
+<body>
+    <img src="fondo.jpg" id="fondo" alt="" hidden>
+    <img src="nave.png" id="nave" alt="" hidden>
+    <canvas id="myCanvas" width="1300" height=800"></canvas>
+    <script type="text/javascript">
+        const myCanvas = document.getElementById("myCanvas");
+        const ctx = myCanvas.getContext("2d");
+
+        <!-- DECLARACION DE CLASES -->
+        class misil_Jugador{
+            constructor(color, x, y, alto, ancho) {
+                this.alto = alto;
+                this.ancho = ancho;
+                this.color = color;
+                this.x = x;
+                this.y = y;
+            }
+
+            Colision(objetivo){
+                if(this.x < objetivo.x + objetivo.ancho &&  
+                   this.x + this.ancho > objetivo.x &&  
+                   this.y < objetivo.y + objetivo.alto &&   
+                   this.y + this.alto > objetivo.y){ 
+                    return true;    
+                }
+                return false;
+            }
+        };
+
+        const misiles_Jugador = [];
+        var direccion = '';
+        var jugador_x = 620;
+
+        document.addEventListener('keypress', function(e){
+            switch(e.keyCode){
+                case 97:
+                    direccion = 'left';
+                break;
+                case 100:
+                    direccion = 'right';
+                break;
+                case 32:
+                    misiles_Jugador.push(new misil_Jugador("Red",(jugador_x + 27), 580, 50, 7));
+                break;
+            } 
+        });
+
+        function update(){
+            switch(direccion){
+            case 'left':
+                if(jugador_x >= 10){
+                    jugador_x -= 5; 
+                }
+            break;
+            case 'right':
+                console.log(jugador_x)
+                if(jugador_x <= 1230){
+                    jugador_x += 5;
+                }
+            break;
+            }
+        }
+
+        function pintar(){
+            const img_fondo = document.getElementById("fondo");
+            ctx.drawImage(img_fondo, 0, 0, 1300, 800);
+
+            const img_nave = document.getElementById("nave");
+            ctx.drawImage(img_nave, jugador_x, 630, 60, 60);
+
+            misiles_Jugador.forEach(function (misil, i, array) {
+                ctx.fillStyle  = misil.color;
+                ctx.fillRect(misil.x,misil.y,misil.ancho,misil.alto);
+                misil.y -= 7;
+            });
+
+            update();
+            requestAnimationFrame(pintar);
+        }
+
+        requestAnimationFrame(pintar);
+        window.requestAnimationFrame = (function () {
+        return window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        function (callback) {
+            window.setTimeout(callback, 17);
+        };
+        }());
+    </script>
+</body>
+</html>
