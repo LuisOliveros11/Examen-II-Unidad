@@ -9,12 +9,34 @@
 <body>
     <img src="fondo.jpg" id="fondo" alt="" hidden>
     <img src="nave.png" id="nave" alt="" hidden>
+    <img src="nave_Enemiga.png" id="nave_Enemiga" alt="" hidden>
+    <img src="nave_Enemiga_II.png" id="nave_Enemiga_II" alt="" hidden>
+    <img src="nave_Enemiga_III.png" id="nave_Enemiga_III" alt="" hidden>
     <canvas id="myCanvas" width="1300" height=800"></canvas>
     <script type="text/javascript">
         const myCanvas = document.getElementById("myCanvas");
         const ctx = myCanvas.getContext("2d");
 
-        <!-- DECLARACION DE CLASES -->
+        //DECLARACION DE CLASES 
+        class nave_Enemiga{
+            constructor(x, y, alto, ancho) {
+                this.alto = alto;
+                this.ancho = ancho;
+                this.x = x;
+                this.y = y;
+            }
+
+            Colision(objetivo){
+                if(this.x < objetivo.x + objetivo.ancho &&  
+                   this.x + this.ancho > objetivo.x &&  
+                   this.y < objetivo.y + objetivo.alto &&   
+                   this.y + this.alto > objetivo.y){ 
+                    return true;    
+                }
+                return false;
+            }
+        };
+
         class misil_Jugador{
             constructor(color, x, y, alto, ancho) {
                 this.alto = alto;
@@ -35,9 +57,37 @@
             }
         };
 
+        class misil_Nave_Enemiga{
+            constructor(color, x, y, alto, ancho) {
+                this.alto = alto;
+                this.ancho = ancho;
+                this.color = color;
+                this.x = x;
+                this.y = y;
+            }
+
+            Colision(objetivo){
+                if(this.x < objetivo.x + objetivo.ancho &&  
+                   this.x + this.ancho > objetivo.x &&  
+                   this.y < objetivo.y + objetivo.alto &&   
+                   this.y + this.alto > objetivo.y){ 
+                    return true;    
+                }
+                return false;
+            }
+        };
+
+        const img_nave = document.getElementById("nave");
+        const img_fondo = document.getElementById("fondo");
+        const img_nave_Enemiga = document.getElementById("nave_Enemiga");
+        const img_nave_Enemiga_II = document.getElementById("nave_Enemiga_II");
+        const img_nave_Enemiga_III = document.getElementById("nave_Enemiga_III");
         const misiles_Jugador = [];
+        const naves_Enemigas = [];
         var direccion = '';
         var jugador_x = 620;
+        var cantidad_Naves_Enemigas = 23;
+        pintar_Naves_Enemigas();
 
         document.addEventListener('keypress', function(e){
             switch(e.keyCode){
@@ -48,7 +98,7 @@
                     direccion = 'right';
                 break;
                 case 32:
-                    misiles_Jugador.push(new misil_Jugador("Red",(jugador_x + 27), 580, 50, 7));
+                    misiles_Jugador.push(new misil_Jugador("#37ff23",(jugador_x + 27), 610, 50, 7));
                 break;
             } 
         });
@@ -61,7 +111,6 @@
                 }
             break;
             case 'right':
-                console.log(jugador_x)
                 if(jugador_x <= 1230){
                     jugador_x += 5;
                 }
@@ -70,12 +119,15 @@
         }
 
         function pintar(){
-            const img_fondo = document.getElementById("fondo");
             ctx.drawImage(img_fondo, 0, 0, 1300, 800);
+            ctx.drawImage(img_nave, jugador_x, 670, 60, 60);
 
-            const img_nave = document.getElementById("nave");
-            ctx.drawImage(img_nave, jugador_x, 630, 60, 60);
+            //PINTAR NAVES ENEMIGAS
+            naves_Enemigas.forEach(function (nave, i, array) {
+                ctx.drawImage(img_nave_Enemiga, nave.x, nave.y, nave.ancho, nave.alto)
+            });
 
+            //PINTAR MISILES DE JUGADOR CADA VEZ QUE DISPARA
             misiles_Jugador.forEach(function (misil, i, array) {
                 ctx.fillStyle  = misil.color;
                 ctx.fillRect(misil.x,misil.y,misil.ancho,misil.alto);
@@ -84,6 +136,23 @@
 
             update();
             requestAnimationFrame(pintar);
+        }
+
+        function pintar_Naves_Enemigas(){
+            //PINTAR PRIMERA FILA DE NAVES ENEMIGAS
+            for (let index = 100; index < 1200; index+=100) { 
+                naves_Enemigas.push(new nave_Enemiga(index,50,60,60));
+            }
+
+            //PINTAR SEGUNDA FILA DE NAVES ENEMIGAS
+            for (let index = 100; index < 1200; index+=100) { 
+                naves_Enemigas.push(new nave_Enemiga(index,170,60,60));
+            }
+
+            //PINTAR TERCERA FILA DE NAVES ENEMIGAS
+            for (let index = 100; index < 1200; index+=100) { 
+                naves_Enemigas.push(new nave_Enemiga(index,290,60,60));
+            }
         }
 
         requestAnimationFrame(pintar);
