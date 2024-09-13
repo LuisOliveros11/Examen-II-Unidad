@@ -134,6 +134,19 @@
                 misil.y -= 7;
             });
 
+            //VERIFICAR IMPACTO O COLISION DE MISIL DE JUGADOR CON NAVES ENEMIGAS
+            naves_Enemigas.forEach(function (nave, i, array){
+                misiles_Jugador.forEach(function (misil, j, array){
+                    if(misil.Colision(nave)){
+                        naves_Enemigas.splice(i,1);
+                        misiles_Jugador.splice(j,1);
+                        if(naves_Enemigas.length == 0){
+                            pintar_Naves_Enemigas();
+                        }
+                    }
+                });
+            });
+
             update();
             requestAnimationFrame(pintar);
         }
