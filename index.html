@@ -28,7 +28,8 @@
         const ctx = myCanvas.getContext("2d");
         //DECLARACION DE CLASES 
         class nave_Enemiga{
-            constructor(x, y, alto, ancho) {
+            constructor(id, x, y, alto, ancho) {
+                this.id = id;
                 this.alto = alto;
                 this.ancho = ancho;
                 this.x = x;
@@ -94,9 +95,11 @@
         const misiles_Jugador = [];
         const naves_Enemigas = [];
         var direccion = '';
+        var lado = "der"
         var jugador_x = 620;
-        var cantidad_Naves_Enemigas = 23;
-        pintar_Naves_Enemigas();
+        var cantidad_Naves_Enemigas = 33;
+        var id_nave_enemiga = 0;
+        crear_Naves_Enemigas();
 
         document.addEventListener('keypress', function(e){
             switch(e.keyCode){
@@ -133,13 +136,14 @@
 
             //PINTAR NAVES ENEMIGAS
             naves_Enemigas.forEach(function (nave, i, array) {
-                if(nave.y == 50){
+                if(nave.id >= 0 && nave.id <= 10){
                     ctx.drawImage(img_nave_Enemiga_II, nave.x, nave.y, nave.ancho, nave.alto)
                 }else{
                     ctx.drawImage(img_nave_Enemiga, nave.x, nave.y, nave.ancho, nave.alto)
-                }
-                
+                }            
             });
+
+            movimiento_Naves_Enemigas()
 
             //PINTAR MISILES DE JUGADOR CADA VEZ QUE DISPARA
             misiles_Jugador.forEach(function (misil, i, array) {
@@ -155,7 +159,8 @@
                         naves_Enemigas.splice(i,1);
                         misiles_Jugador.splice(j,1);
                         if(naves_Enemigas.length == 0){
-                            pintar_Naves_Enemigas();
+                            id_nave_enemiga = 0;
+                            crear_Naves_Enemigas();
                         }
                     }
                 });
@@ -165,20 +170,61 @@
             requestAnimationFrame(pintar);
         }
 
-        function pintar_Naves_Enemigas(){
+        function crear_Naves_Enemigas(){
             //PINTAR PRIMERA FILA DE NAVES ENEMIGAS
             for (let index = 100; index < 1200; index+=100) { 
-                naves_Enemigas.push(new nave_Enemiga(index,50,60,60));
+                naves_Enemigas.push(new nave_Enemiga(id_nave_enemiga, index,50,60,60));
+                id_nave_enemiga++;
             }
 
             //PINTAR SEGUNDA FILA DE NAVES ENEMIGAS
             for (let index = 100; index < 1200; index+=100) { 
-                naves_Enemigas.push(new nave_Enemiga(index,170,60,60));
+                naves_Enemigas.push(new nave_Enemiga(id_nave_enemiga, index,170,60,60));
+                id_nave_enemiga++;
             }
 
             //PINTAR TERCERA FILA DE NAVES ENEMIGAS
             for (let index = 100; index < 1200; index+=100) { 
-                naves_Enemigas.push(new nave_Enemiga(index,290,60,60));
+                naves_Enemigas.push(new nave_Enemiga(id_nave_enemiga, index,290,60,60));
+                id_nave_enemiga++;
+            }
+        }
+
+        function movimiento_Naves_Enemigas(){
+            let borde_Derecho = false;
+            let borde_Izquierdo = false;
+
+            //VERIFICAR SI TOCA BORDE
+            naves_Enemigas.forEach(function (nave, i, array){
+                if(nave.x + nave.ancho >= myCanvas.width){
+                    borde_Derecho = true;
+                }else if(nave.x <= 0){
+                    borde_Izquierdo = true;
+                }
+            });
+
+            //MOVER NAVES
+            if(lado == "der"){
+                naves_Enemigas.forEach(function (nave, i, array){
+                    nave.x += 0.5;
+                });
+            }else{
+                naves_Enemigas.forEach(function (nave, i, array){
+                    nave.x -= 0.5;
+                });
+            }
+
+            //BAJAR NAVES
+            if(borde_Derecho && lado == "der"){
+                lado = "izq";
+                naves_Enemigas.forEach(function (nave, i, array){
+                    nave.y += 20;
+                });
+            }else if(borde_Izquierdo && lado == "izq"){
+                lado = "der";
+                naves_Enemigas.forEach(function (nave, i, array){
+                    nave.y += 20;
+                });
             }
         }
 
