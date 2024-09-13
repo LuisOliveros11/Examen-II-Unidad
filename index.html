@@ -12,11 +12,20 @@
     <img src="nave_Enemiga.png" id="nave_Enemiga" alt="" hidden>
     <img src="nave_Enemiga_II.png" id="nave_Enemiga_II" alt="" hidden>
     <img src="nave_Enemiga_III.png" id="nave_Enemiga_III" alt="" hidden>
-    <canvas id="myCanvas" width="1300" height=800"></canvas>
+
+    <div class="main">
+        <div class="cronometro" id="cronometro">
+            
+        </div>
+        <div class="canvas">
+            <canvas id="myCanvas" width="1300" height="800"></canvas>
+        </div>
+    </div>
+    
+    
     <script type="text/javascript">
         const myCanvas = document.getElementById("myCanvas");
         const ctx = myCanvas.getContext("2d");
-
         //DECLARACION DE CLASES 
         class nave_Enemiga{
             constructor(x, y, alto, ancho) {
@@ -124,7 +133,12 @@
 
             //PINTAR NAVES ENEMIGAS
             naves_Enemigas.forEach(function (nave, i, array) {
-                ctx.drawImage(img_nave_Enemiga, nave.x, nave.y, nave.ancho, nave.alto)
+                if(nave.y == 50){
+                    ctx.drawImage(img_nave_Enemiga_II, nave.x, nave.y, nave.ancho, nave.alto)
+                }else{
+                    ctx.drawImage(img_nave_Enemiga, nave.x, nave.y, nave.ancho, nave.alto)
+                }
+                
             });
 
             //PINTAR MISILES DE JUGADOR CADA VEZ QUE DISPARA
@@ -166,6 +180,28 @@
             for (let index = 100; index < 1200; index+=100) { 
                 naves_Enemigas.push(new nave_Enemiga(index,290,60,60));
             }
+        }
+
+        //CODIGO PARA HACER EL CRONOMETRO
+        let inicio = true;
+        let tiempo_Referencia = Date.now();
+        let tiempo_Acumulado = 0;
+        setInterval(()=>{
+            let tiempo = document.getElementById("cronometro");
+            if(inicio){
+                tiempo_Acumulado = Date.now() - tiempo_Referencia;
+                tiempo.innerHTML = "Tiempo: " + formatoCronometro(tiempo_Acumulado);
+            }
+        }, 1000/60);
+
+        function formatoCronometro(milisegundos){
+            let ms = milisegundos % 1000;
+            let s = Math.floor(((milisegundos - ms) / 1000) % 60);
+            let m = Math.floor((s / 60) % 60);
+            Number.prototype.ceros = function(n){
+                return (this + "").padStart(n,0)
+            }
+            return m.ceros(2) + ":" + s.ceros(2);
         }
 
         requestAnimationFrame(pintar);
