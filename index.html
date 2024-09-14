@@ -68,12 +68,13 @@
         };
 
         class misil_Nave_Enemiga{
-            constructor(color, x, y, alto, ancho) {
+            constructor(color, x, y, alto, ancho, daño) {
                 this.alto = alto;
                 this.ancho = ancho;
                 this.color = color;
                 this.x = x;
                 this.y = y;
+                this.daño = daño;
             }
 
             Colision(objetivo){
@@ -93,12 +94,14 @@
         const img_nave_Enemiga_II = document.getElementById("nave_Enemiga_II");
         const img_nave_Enemiga_III = document.getElementById("nave_Enemiga_III");
         const misiles_Jugador = [];
+        const misiles_Naves_Enemigas = [];
         const naves_Enemigas = [];
         var direccion = '';
         var lado = "der"
         var jugador_x = 620;
         var cantidad_Naves_Enemigas = 33;
         var id_nave_enemiga = 0;
+        var dificultad = 3;
         crear_Naves_Enemigas();
 
         document.addEventListener('keypress', function(e){
@@ -152,6 +155,14 @@
                 misil.y -= 7;
             });
 
+            //PINTAR MISILES DE NAVE ENEMIGA CADA VEZ QUE DISPARA
+            disparo_Nave_Enemiga();
+            misiles_Naves_Enemigas.forEach(function (misil, i, array) {
+                ctx.fillStyle  = misil.color;
+                ctx.fillRect(misil.x,misil.y,misil.ancho,misil.alto);
+                misil.y += 7;
+            });
+
             //VERIFICAR IMPACTO O COLISION DE MISIL DE JUGADOR CON NAVES ENEMIGAS
             naves_Enemigas.forEach(function (nave, i, array){
                 misiles_Jugador.forEach(function (misil, j, array){
@@ -160,6 +171,11 @@
                         misiles_Jugador.splice(j,1);
                         if(naves_Enemigas.length == 0){
                             id_nave_enemiga = 0;
+                            if(dificultad > 1){
+                                dificultad -= 0.5;
+                            }else{
+                                dificultad -= 0.1;
+                            }
                             crear_Naves_Enemigas();
                         }
                     }
@@ -190,6 +206,7 @@
             }
         }
 
+        //CODIGO PARA MOVER NAVES ENEMIGAS
         function movimiento_Naves_Enemigas(){
             let borde_Derecho = false;
             let borde_Izquierdo = false;
@@ -228,6 +245,19 @@
             }
         }
 
+        //FUNCION PARA PROGRAMAR DISPAROS DE LAS NAVES ENEMIGAS
+        let tiempo_Acumulado_Anterior = 0;
+        function disparo_Nave_Enemiga(){
+            let nave_Id = Math.floor(Math.random() * 32);
+
+            if(naves_Enemigas[nave_Id] != null && ((tiempo_Acumulado / 1000) - tiempo_Acumulado_Anterior) >= dificultad){
+                console.log(dificultad)
+                misiles_Naves_Enemigas.push(new misil_Nave_Enemiga(
+                "red",(naves_Enemigas[nave_Id].x + 27), naves_Enemigas[nave_Id].y,50,7,1));
+                tiempo_Acumulado_Anterior = tiempo_Acumulado / 1000;
+            }
+        }
+
         //CODIGO PARA HACER EL CRONOMETRO
         let inicio = true;
         let tiempo_Referencia = Date.now();
@@ -235,15 +265,18 @@
         setInterval(()=>{
             let tiempo = document.getElementById("cronometro");
             if(inicio){
-                tiempo_Acumulado = Date.now() - tiempo_Referencia;
-                tiempo.innerHTML = "Tiempo: " + formatoCronometro(tiempo_Acumulado);
+                tiempo_Acumulado += Date.now() - tiempo_Referencia;
             }
+            tiempo_Referencia = Date.now();
+            tiempo.innerHTML = "Tiempo: " + formatoCronometro(tiempo_Acumulado);
         }, 1000/60);
 
         function formatoCronometro(milisegundos){
             let ms = milisegundos % 1000;
-            let s = Math.floor(((milisegundos - ms) / 1000) % 60);
-            let m = Math.floor((s / 60) % 60);
+            let St = Math.floor(((milisegundos - ms) / 1000))
+            let s = St % 60
+            let m = Math.floor((St / 60) % 60)
+            let h = Math.floor((St/60 / 60))
             Number.prototype.ceros = function(n){
                 return (this + "").padStart(n,0)
             }
