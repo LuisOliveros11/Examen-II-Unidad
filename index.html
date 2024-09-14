@@ -28,8 +28,8 @@
         const ctx = myCanvas.getContext("2d");
         //DECLARACION DE CLASES 
         class nave_Enemiga{
-            constructor(id, x, y, alto, ancho) {
-                this.id = id;
+            constructor(tipo, x, y, alto, ancho) {
+                this.tipo = tipo;
                 this.alto = alto;
                 this.ancho = ancho;
                 this.x = x;
@@ -88,6 +88,27 @@
             }
         };
 
+        class pared{
+            constructor(color, x, y, alto, ancho, resistencia) {
+                this.alto = alto;
+                this.ancho = ancho;
+                this.color = color;
+                this.x = x;
+                this.y = y;
+                this.resistencia = resistencia;
+            }
+
+            Colision(objetivo){
+                if(this.x < objetivo.x + objetivo.ancho &&  
+                   this.x + this.ancho > objetivo.x &&  
+                   this.y < objetivo.y + objetivo.alto &&   
+                   this.y + this.alto > objetivo.y){ 
+                    return true;    
+                }
+                return false;
+            }
+        };
+
         const img_nave = document.getElementById("nave");
         const img_fondo = document.getElementById("fondo");
         const img_nave_Enemiga = document.getElementById("nave_Enemiga");
@@ -96,13 +117,14 @@
         const misiles_Jugador = [];
         const misiles_Naves_Enemigas = [];
         const naves_Enemigas = [];
+        const paredes = [];
         var direccion = '';
         var lado = "der"
         var jugador_x = 620;
         var cantidad_Naves_Enemigas = 33;
-        var id_nave_enemiga = 0;
         var dificultad = 3;
         crear_Naves_Enemigas();
+        programar_Paredes();
 
         document.addEventListener('keypress', function(e){
             switch(e.keyCode){
@@ -113,7 +135,7 @@
                     direccion = 'right';
                 break;
                 case 32:
-                    misiles_Jugador.push(new misil_Jugador("#37ff23",(jugador_x + 27), 610, 50, 7));
+                    misiles_Jugador.push(new misil_Jugador("#37ff23",(jugador_x + 27), 650, 50, 7));
                 break;
             } 
         });
@@ -135,15 +157,21 @@
 
         function pintar(){
             ctx.drawImage(img_fondo, 0, 0, 1300, 800);
-            ctx.drawImage(img_nave, jugador_x, 670, 60, 60);
+            ctx.drawImage(img_nave, jugador_x, 700, 60, 60);
 
             //PINTAR NAVES ENEMIGAS
             naves_Enemigas.forEach(function (nave, i, array) {
-                if(nave.id >= 0 && nave.id <= 10){
+                if(nave.tipo == 2){
                     ctx.drawImage(img_nave_Enemiga_II, nave.x, nave.y, nave.ancho, nave.alto)
                 }else{
                     ctx.drawImage(img_nave_Enemiga, nave.x, nave.y, nave.ancho, nave.alto)
                 }            
+            });
+
+            //PINTAR PAREDES
+            paredes.forEach(function (pared, i, array) {
+                ctx.fillStyle  = pared.color;
+                ctx.fillRect(pared.x,pared.y,pared.ancho,pared.alto);            
             });
 
             movimiento_Naves_Enemigas()
@@ -170,7 +198,48 @@
                         naves_Enemigas.splice(i,1);
                         misiles_Jugador.splice(j,1);
                         if(naves_Enemigas.length == 0){
-                            id_nave_enemiga = 0;
+                            if(dificultad > 1){
+                                dificultad -= 0.5;
+                            }else{
+                                dificultad -= 0.1;
+                            }
+                            crear_Naves_Enemigas();
+                        }
+                    }
+                });
+            });
+
+            //VERIFICAR IMPACTO O COLISION DE MISIL CON PAREDES
+            misiles_Jugador.forEach(function(misil, i, array){
+                paredes.forEach(function(pared, j, array){
+                    if(pared.Colision(misil)){
+                        pared.resistencia--;
+                        if(pared.resistencia == 0){
+                            paredes.splice(j,1);
+                        }
+                        misiles_Jugador.splice(i,1);
+                    }
+                });
+            });
+
+            misiles_Naves_Enemigas.forEach(function(misil, i, array){
+                paredes.forEach(function(pared, j, array){
+                    if(pared.Colision(misil)){
+                        pared.resistencia-= misil.daño;
+                        if(pared.resistencia == 0){
+                            paredes.splice(j,1);
+                        }
+                        misiles_Naves_Enemigas.splice(i,1);
+                    }
+                });
+            });
+
+            naves_Enemigas.forEach(function(nave, i, array){
+                paredes.forEach(function(pared, j, array){
+                    if(pared.Colision(nave)){
+                        paredes.splice(j,1);
+                        naves_Enemigas.splice(i,1);
+                        if(naves_Enemigas.length == 0){
                             if(dificultad > 1){
                                 dificultad -= 0.5;
                             }else{
@@ -189,20 +258,17 @@
         function crear_Naves_Enemigas(){
             //PINTAR PRIMERA FILA DE NAVES ENEMIGAS
             for (let index = 100; index < 1200; index+=100) { 
-                naves_Enemigas.push(new nave_Enemiga(id_nave_enemiga, index,50,60,60));
-                id_nave_enemiga++;
+                naves_Enemigas.push(new nave_Enemiga(2, index,50,60,60));
             }
 
             //PINTAR SEGUNDA FILA DE NAVES ENEMIGAS
             for (let index = 100; index < 1200; index+=100) { 
-                naves_Enemigas.push(new nave_Enemiga(id_nave_enemiga, index,170,60,60));
-                id_nave_enemiga++;
+                naves_Enemigas.push(new nave_Enemiga(1, index,170,60,60));
             }
 
             //PINTAR TERCERA FILA DE NAVES ENEMIGAS
             for (let index = 100; index < 1200; index+=100) { 
-                naves_Enemigas.push(new nave_Enemiga(id_nave_enemiga, index,290,60,60));
-                id_nave_enemiga++;
+                naves_Enemigas.push(new nave_Enemiga(1, index,290,60,60));
             }
         }
 
@@ -223,11 +289,11 @@
             //MOVER NAVES
             if(lado == "der"){
                 naves_Enemigas.forEach(function (nave, i, array){
-                    nave.x += 0.5;
+                    nave.x += 3 / dificultad;
                 });
             }else{
                 naves_Enemigas.forEach(function (nave, i, array){
-                    nave.x -= 0.5;
+                    nave.x -= 3 / dificultad;
                 });
             }
 
@@ -251,10 +317,123 @@
             let nave_Id = Math.floor(Math.random() * 32);
 
             if(naves_Enemigas[nave_Id] != null && ((tiempo_Acumulado / 1000) - tiempo_Acumulado_Anterior) >= dificultad){
-                console.log(dificultad)
+                switch(naves_Enemigas[nave_Id].tipo){
+                    case 1:
+                        misiles_Naves_Enemigas.push(new misil_Nave_Enemiga(
+                        "red",(naves_Enemigas[nave_Id].x + 27), naves_Enemigas[nave_Id].y,50,7,1));
+                    break;
+                    case 2:
+                        misiles_Naves_Enemigas.push(new misil_Nave_Enemiga(
+                        "red",(naves_Enemigas[nave_Id].x + 27), naves_Enemigas[nave_Id].y,50,7,2));
+                    break;
+                }
                 misiles_Naves_Enemigas.push(new misil_Nave_Enemiga(
                 "red",(naves_Enemigas[nave_Id].x + 27), naves_Enemigas[nave_Id].y,50,7,1));
                 tiempo_Acumulado_Anterior = tiempo_Acumulado / 1000;
+            }
+        }
+
+        //CODIGO PARA CREAR LAS PAREDES
+        function programar_Paredes(){
+            //PARED 1
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 120, index, 10, 7, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 127, index, 10, 7, 2));
+            }
+            for (let index = 130; index < 230; index+=4) {
+                paredes.push(new pared("green", index, 560,5, 5, 2));
+            }
+            for (let index = 130; index < 230; index+=4) {
+                paredes.push(new pared("green", index, 564,5, 5, 2));
+            }
+            for (let index = 130; index < 230; index+=4) {
+                paredes.push(new pared("green", index, 568,5, 5, 2));
+            }
+            for (let index = 130; index < 230; index+=4) {
+                paredes.push(new pared("green", index, 572,5, 5, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 227, index, 10, 7, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 220, index, 10, 7, 2));
+            }
+            //PARED 2
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 420, index, 10, 7, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 427, index, 10, 7, 2));
+            }
+            for (let index = 430; index < 530; index+=4) {
+                paredes.push(new pared("green", index, 560,5, 5, 2));
+            }
+            for (let index = 430; index < 530; index+=4) {
+                paredes.push(new pared("green", index, 564,5, 5, 2));
+            }
+            for (let index = 430; index < 530; index+=4) {
+                paredes.push(new pared("green", index, 568,5, 5, 2));
+            }
+            for (let index = 430; index < 530; index+=4) {
+                paredes.push(new pared("green", index, 572,5, 5, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 527, index, 10, 7, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 520, index, 10, 7, 2));
+            }
+            //PARED 3
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 720, index, 10, 7, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 727, index, 10, 7, 2));
+            }
+            for (let index = 730; index < 830; index+=4) {
+                paredes.push(new pared("green", index, 560,5, 5, 2));
+            }
+            for (let index = 730; index < 830; index+=4) {
+                paredes.push(new pared("green", index, 564,5, 5, 2));
+            }
+            for (let index = 730; index < 830; index+=4) {
+                paredes.push(new pared("green", index, 568,5, 5, 2));
+            }
+            for (let index = 730; index < 830; index+=4) {
+                paredes.push(new pared("green", index, 572,5, 5, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 827, index, 10, 7, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 820, index, 10, 7, 2));
+            }
+            //PARED 4
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 1020, index, 10, 7, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 1027, index, 10, 7, 2));
+            }
+            for (let index = 1030; index < 1130; index+=4) {
+                paredes.push(new pared("green", index, 560,5, 5, 2));
+            }
+            for (let index = 1030; index < 1130; index+=4) {
+                paredes.push(new pared("green", index, 564,5, 5, 2));
+            }
+            for (let index = 1030; index < 1130; index+=4) {
+                paredes.push(new pared("green", index, 568,5, 5, 2));
+            }
+            for (let index = 1030; index < 1130; index+=4) {
+                paredes.push(new pared("green", index, 572,5, 5, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 1127, index, 10, 7, 2));
+            }
+            for (let index = 650; index > 550; index-=10) {
+                paredes.push(new pared("green", 1120, index, 10, 7, 2));
             }
         }
 
