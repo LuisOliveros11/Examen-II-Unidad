@@ -15,10 +15,11 @@
 
     <div class="main">
         <div class="cronometro" id="cronometro">
-            
         </div>
         <div class="canvas">
             <canvas id="myCanvas" width="1300" height="800"></canvas>
+        </div>
+        <div class="vidas" id="vidas">
         </div>
     </div>
     
@@ -26,7 +27,28 @@
     <script type="text/javascript">
         const myCanvas = document.getElementById("myCanvas");
         const ctx = myCanvas.getContext("2d");
+        let vidasRestantes = document.getElementById("vidas");  
         //DECLARACION DE CLASES 
+        class nave_Jugador{
+            constructor(x, y, alto, ancho, vidas) {
+                this.alto = alto;
+                this.ancho = ancho;
+                this.x = x;
+                this.y = y;
+                this.vidas = vidas;
+            }
+
+            Colision(objetivo){
+                if(this.x < objetivo.x + objetivo.ancho &&  
+                   this.x + this.ancho > objetivo.x &&  
+                   this.y < objetivo.y + objetivo.alto &&   
+                   this.y + this.alto > objetivo.y){ 
+                    return true;    
+                }
+                return false;
+            }
+        };
+
         class nave_Enemiga{
             constructor(tipo, x, y, alto, ancho) {
                 this.tipo = tipo;
@@ -114,13 +136,13 @@
         const img_nave_Enemiga = document.getElementById("nave_Enemiga");
         const img_nave_Enemiga_II = document.getElementById("nave_Enemiga_II");
         const img_nave_Enemiga_III = document.getElementById("nave_Enemiga_III");
+        var jugador = new nave_Jugador(620,700,60,60,4);
         const misiles_Jugador = [];
         const misiles_Naves_Enemigas = [];
         const naves_Enemigas = [];
         const paredes = [];
         var direccion = '';
         var lado = "der"
-        var jugador_x = 620;
         var cantidad_Naves_Enemigas = 33;
         var dificultad = 3;
         crear_Naves_Enemigas();
@@ -135,7 +157,7 @@
                     direccion = 'right';
                 break;
                 case 32:
-                    misiles_Jugador.push(new misil_Jugador("#37ff23",(jugador_x + 27), 650, 50, 7));
+                    misiles_Jugador.push(new misil_Jugador("#37ff23",(jugador.x + 27), 650, 50, 7));
                 break;
             } 
         });
@@ -143,13 +165,13 @@
         function update(){
             switch(direccion){
             case 'left':
-                if(jugador_x >= 10){
-                    jugador_x -= 5; 
+                if(jugador.x >= 10){
+                    jugador.x -= 5; 
                 }
             break;
             case 'right':
-                if(jugador_x <= 1230){
-                    jugador_x += 5;
+                if(jugador.x <= 1230){
+                    jugador.x += 5;
                 }
             break;
             }
@@ -157,7 +179,8 @@
 
         function pintar(){
             ctx.drawImage(img_fondo, 0, 0, 1300, 800);
-            ctx.drawImage(img_nave, jugador_x, 700, 60, 60);
+            ctx.drawImage(img_nave, jugador.x, jugador.y, jugador.alto, jugador.ancho);
+            vidasRestantes.innerHTML =`<img src="nave.png" width="40" height="40">X${jugador.vidas}`;
 
             //PINTAR NAVES ENEMIGAS
             naves_Enemigas.forEach(function (nave, i, array) {
@@ -207,6 +230,15 @@
                         }
                     }
                 });
+            });
+
+            //VERIFICAR IMPACTO O COLISION DE MISIL DE NAVES ENEMIGAS CON JUGADOR
+            misiles_Naves_Enemigas.forEach(function(misil, i, array){
+                if(misil.Colision(jugador)){
+                    misiles_Naves_Enemigas.splice(i,1);
+                    jugador.vidas--; 
+                    console.log(jugador.vidas);
+                }
             });
 
             //VERIFICAR IMPACTO O COLISION DE MISIL CON PAREDES
@@ -327,8 +359,6 @@
                         "red",(naves_Enemigas[nave_Id].x + 27), naves_Enemigas[nave_Id].y,50,7,2));
                     break;
                 }
-                misiles_Naves_Enemigas.push(new misil_Nave_Enemiga(
-                "red",(naves_Enemigas[nave_Id].x + 27), naves_Enemigas[nave_Id].y,50,7,1));
                 tiempo_Acumulado_Anterior = tiempo_Acumulado / 1000;
             }
         }
