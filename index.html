@@ -246,7 +246,7 @@
                                     ctx.drawImage(img_nave_Enemiga_III, nave.x, nave.y, nave.ancho, nave.alto)
                                     nave.x += 5;
                                     if (nave.x >= posicion_X_Inicial + 250) {
-                                        misiles_Naves_Enemigas.push(new misil_Nave_Enemiga("black", nave.x + 27, 80, 50, 7, 3));
+                                        misiles_Naves_Enemigas.push(new misil_Nave_Enemiga("white", nave.x + 27, 80, 50, 7, 3));
                                         posicion_X_Inicial = nave.x;
                                     }
                                     if (nave.x >= myCanvas.width) {
@@ -506,7 +506,7 @@
             }
             if ((tiempo_Acumulado / 1000) - tiempo_Acumulado_Anterior_Tercera_Nave >= 2 * (dificultad / 0.4)) {
                 naves_Enemigas.push(new nave_Enemiga(3, 100, 30, 60, 60, 3));
-                misiles_Naves_Enemigas.push(new misil_Nave_Enemiga("black", 127, 80, 50, 7, 3));
+                misiles_Naves_Enemigas.push(new misil_Nave_Enemiga("white", 127, 80, 50, 7, 3));
                 disparo_nave_III();
                 tiempo_Acumulado_Anterior_Tercera_Nave = tiempo_Acumulado / 1000;
             }
