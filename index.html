@@ -17,12 +17,18 @@
     <img src="portada.jpg" id="portada" alt="" hidden>
 
     <div class="main">
-        <div class="cronometro" id="cronometro">
+        <div class="instrucciones" id="instrucciones">
+            <h2>Controles:</h2>
+            <p>a: Izquierda</p>
+            <p>d: Derecha</p>
+            <p>Espacio: Disparar</p>
+            <p>p: Pausa</p>
+                                                    
         </div>
         <div class="canvas">
             <canvas id="myCanvas" width="1300" height="800"></canvas>
         </div>
-        <div class="vidas" id="vidas">
+        <div class="stats" id="stats">
         </div>
     </div>
 
@@ -30,7 +36,7 @@
     <script type="text/javascript">
         const myCanvas = document.getElementById("myCanvas");
         const ctx = myCanvas.getContext("2d");
-        let vidasRestantes = document.getElementById("vidas");
+        let stats = document.getElementById("stats");
         //DECLARACION DE CLASES 
         class nave_Jugador {
             constructor(x, y, alto, ancho, vidas) {
@@ -135,20 +141,27 @@
             }
         };
 
+        const audio = new Audio("musica_Fondo.mp3");
+        const disparo_1 = new Audio("disparo_Nave_I.mp3");
+        const disparo_2 = new Audio("disparo_Nave_II.mp3");
+        const disparo_3 = new Audio("disparo_Nave_III.mp3");
+        audio.loop = true;
+        audio.volume = 0.4;
         const img_nave = document.getElementById("nave");
         const img_fondo = document.getElementById("fondo");
         const img_nave_Enemiga = document.getElementById("nave_Enemiga");
         const img_nave_Enemiga_II = document.getElementById("nave_Enemiga_II");
         const img_nave_Enemiga_III = document.getElementById("nave_Enemiga_III");
-        var jugador = new nave_Jugador(620, 700, 60, 60, 4);
-        const misiles_Jugador = [];
-        const misiles_Naves_Enemigas = [];
-        const naves_Enemigas = [];
-        const paredes = [];
+        var jugador = new nave_Jugador(620, 700, 60, 60, 3);
+        var misiles_Jugador = [];
+        var misiles_Naves_Enemigas = [];
+        var naves_Enemigas = [];
+        var paredes = [];
         var direccion = '';
         var lado = "der"
         var dificultad = 3;
         var posicion_X_Inicial = 0;
+        var score = 0;
         var jugar = false;
         var inicio = false;
         var pausa = false;
@@ -156,7 +169,6 @@
         programar_Paredes();
 
         document.addEventListener('keypress', function (e) {
-            console.log(e.keyCode)
             switch (e.keyCode) {
                 case 65:
                 case 97:
@@ -167,10 +179,15 @@
                     direccion = 'right';
                     break;
                 case 32:
-                    misiles_Jugador.push(new misil_Jugador("#37ff23", (jugador.x + 27), 650, 50, 7));
+                    if(jugar){
+                        misiles_Jugador.push(new misil_Jugador("#37ff23", (jugador.x + 27), 650, 50, 7));
+                        if(jugador.vidas > 0){
+                            disparo_Jugador(); 
+                        }
+                    }
                     break;
                 case 112:
-                    if(jugar){
+                    if (jugar) {
                         pausa = !pausa;
                         pintar();
                     }
@@ -197,37 +214,141 @@
 
         function pintar() {
             if (jugar) {
-                if (pausa) {
-                    ctx.fillStyle = "rgba(210,207,206,0.3)";
-                    ctx.fillRect(0, 0, myCanvas.width, myCanvas.height);
+                stats.innerHTML = `<h2>Stats:</h2>
+                                    <img src="nave.png" width="50" height="50">X${jugador.vidas}
+                                    <p>Tiempo:  ${formatoCronometro(tiempo_Acumulado)} </p>
+                                    <p>Score:  ${score} </p>`;
+                if (jugador.vidas > 0) {
+                    audio.play();
+                    if (pausa) {
+                        ctx.fillStyle = "rgba(210,207,206,0.3)";
+                        ctx.fillRect(0, 0, myCanvas.width, myCanvas.height);
 
-                    ctx.fillStyle = 'white';
-                    ctx.font = "bold 50px 'Courier New', Courier, monospace";
-                    ctx.fillText("P A U S A D O", 450, 400);
-                    inicio = false;
-                }else {
-                    inicio = true;
-                    ctx.drawImage(img_fondo, 0, 0, 1300, 800);
-                    ctx.drawImage(img_nave, jugador.x, jugador.y, jugador.alto, jugador.ancho);
-                    vidasRestantes.innerHTML = `<img src="nave.png" width="40" height="40">X${jugador.vidas}`;
+                        ctx.fillStyle = 'white';
+                        ctx.font = "bold 50px 'Courier New', Courier, monospace";
+                        ctx.fillText("P A U S A D O", 450, 400);
+                        inicio = false;
+                    } else {
+                        inicio = true;
+                        ctx.drawImage(img_fondo, 0, 0, 1300, 800);
+                        ctx.drawImage(img_nave, jugador.x, jugador.y, jugador.alto, jugador.ancho);
 
-                    //PINTAR NAVES ENEMIGAS
-                    naves_Enemigas.forEach(function (nave, i, array) {
-                        switch (nave.tipo) {
-                            case 1:
-                                ctx.drawImage(img_nave_Enemiga, nave.x, nave.y, nave.ancho, nave.alto)
-                                break;
-                            case 2:
-                                ctx.drawImage(img_nave_Enemiga_II, nave.x, nave.y, nave.ancho, nave.alto)
-                                break;
-                            case 3:
-                                ctx.drawImage(img_nave_Enemiga_III, nave.x, nave.y, nave.ancho, nave.alto)
-                                nave.x += 5;
-                                if (nave.x >= posicion_X_Inicial + 250) {
-                                    misiles_Naves_Enemigas.push(new misil_Nave_Enemiga("black", nave.x + 27, 80, 50, 7, 3));
-                                    posicion_X_Inicial = nave.x;
+                        //PINTAR NAVES ENEMIGAS
+                        naves_Enemigas.forEach(function (nave, i, array) {
+                            switch (nave.tipo) {
+                                case 1:
+                                    ctx.drawImage(img_nave_Enemiga, nave.x, nave.y, nave.ancho, nave.alto)
+                                    break;
+                                case 2:
+                                    ctx.drawImage(img_nave_Enemiga_II, nave.x, nave.y, nave.ancho, nave.alto)
+                                    break;
+                                case 3:
+                                    ctx.drawImage(img_nave_Enemiga_III, nave.x, nave.y, nave.ancho, nave.alto)
+                                    nave.x += 5;
+                                    if (nave.x >= posicion_X_Inicial + 250) {
+                                        misiles_Naves_Enemigas.push(new misil_Nave_Enemiga("black", nave.x + 27, 80, 50, 7, 3));
+                                        posicion_X_Inicial = nave.x;
+                                    }
+                                    if (nave.x >= myCanvas.width) {
+                                        naves_Enemigas.splice(i, 1);
+                                        if (naves_Enemigas.length == 0) {
+                                            if (dificultad > 1) {
+                                                dificultad -= 0.5;
+                                            } else {
+                                                dificultad -= 0.1;
+                                            }
+                                            crear_Naves_Enemigas();
+                                        }
+                                        posicion_X_Inicial = 0;
+                                    }
+                                    break;
+                            }
+                        });
+
+                        //PINTAR PAREDES
+                        paredes.forEach(function (pared, i, array) {
+                            ctx.fillStyle = pared.color;
+                            ctx.fillRect(pared.x, pared.y, pared.ancho, pared.alto);
+                        });
+
+                        movimiento_Naves_Enemigas();
+
+                        //PINTAR MISILES DE JUGADOR CADA VEZ QUE DISPARA
+                        misiles_Jugador.forEach(function (misil, i, array) {
+                            ctx.fillStyle = misil.color;
+                            ctx.fillRect(misil.x, misil.y, misil.ancho, misil.alto);
+                            misil.y -= 7;
+                        });
+
+                        //PINTAR MISILES DE NAVE ENEMIGA CADA VEZ QUE DISPARA
+                        disparo_Nave_Enemiga();
+                        misiles_Naves_Enemigas.forEach(function (misil, i, array) {
+                            ctx.fillStyle = misil.color;
+                            ctx.fillRect(misil.x, misil.y, misil.ancho, misil.alto);
+                            misil.y += 7;
+                        });
+
+                        //VERIFICAR IMPACTO O COLISION DE MISIL DE JUGADOR CON NAVES ENEMIGAS
+                        naves_Enemigas.forEach(function (nave, i, array) {
+                            misiles_Jugador.forEach(function (misil, j, array) {
+                                if (misil.Colision(nave)) {
+                                    nave.vida--;
+                                    if (nave.vida <= 0) {
+                                        naves_Enemigas.splice(i, 1);
+                                        score += nave.tipo;
+                                    }
+                                    misiles_Jugador.splice(j, 1);
+                                    if (naves_Enemigas.length == 0) {
+                                        if (dificultad > 1) {
+                                            dificultad -= 0.5;
+                                        } else {
+                                            dificultad -= 0.1;
+                                        }
+                                        crear_Naves_Enemigas();
+                                    }
                                 }
-                                if (nave.x >= myCanvas.width) {
+                            });
+                        });
+
+                        //VERIFICAR IMPACTO O COLISION DE MISIL DE NAVES ENEMIGAS CON JUGADOR
+                        misiles_Naves_Enemigas.forEach(function (misil, i, array) {
+                            if (misil.Colision(jugador)) {
+                                daño();
+                                misiles_Naves_Enemigas.splice(i, 1);
+                                jugador.vidas--;
+                            }
+                        });
+
+                        //VERIFICAR IMPACTO O COLISION DE MISIL CON PAREDES
+                        misiles_Jugador.forEach(function (misil, i, array) {
+                            paredes.forEach(function (pared, j, array) {
+                                if (pared.Colision(misil)) {
+                                    pared.resistencia--;
+                                    if (pared.resistencia == 0) {
+                                        paredes.splice(j, 1);
+                                    }
+                                    misiles_Jugador.splice(i, 1);
+                                }
+                            });
+                        });
+
+                        misiles_Naves_Enemigas.forEach(function (misil, i, array) {
+                            paredes.forEach(function (pared, j, array) {
+                                if (pared.Colision(misil)) {
+                                    pared.resistencia -= misil.daño;
+                                    if (pared.resistencia <= 0) {
+                                        paredes.splice(j, 1);
+                                    }
+                                    misiles_Naves_Enemigas.splice(i, 1);
+                                }
+                            });
+                        });
+
+                        //VERIFICAR IMPACTO O COLISION DE NAVE ENEMIGA CON PAREDES
+                        naves_Enemigas.forEach(function (nave, i, array) {
+                            paredes.forEach(function (pared, j, array) {
+                                if (nave.Colision(pared)) {
+                                    paredes.splice(j, 1);
                                     naves_Enemigas.splice(i, 1);
                                     if (naves_Enemigas.length == 0) {
                                         if (dificultad > 1) {
@@ -237,112 +358,50 @@
                                         }
                                         crear_Naves_Enemigas();
                                     }
-                                    posicion_X_Inicial = 0;
                                 }
-                                break;
+                            });
+                        });
+                        update();
+                        requestAnimationFrame(pintar);
+                    }
+                } else {
+                    stats.innerHTML = `<h2>Stats:</h2>
+                                    <img src="nave.png" width="50" height="50">X${jugador.vidas}
+                                    <p>Tiempo:  ${formatoCronometro(tiempo_Acumulado)} </p>
+                                    <p>Score:  ${score} </p>`;
+                    inicio = false;
+                    ctx.drawImage(portada, 0, 0, myCanvas.width, myCanvas.height);
+                    ctx.fillStyle = "white";
+                    ctx.font = "bold 30px 'Courier New', Courier, monospace";
+                    ctx.fillText("Has perdido! ", 525, 190);
+                    ctx.fillStyle = "#d62727";
+                    ctx.fillRect(550, 650, 200, 70);
+                    ctx.fillStyle = "white";
+                    ctx.font = "bold 30px 'Courier New', Courier, monospace";
+                    ctx.fillText("Jugar", 605, 690);
+
+                    myCanvas.addEventListener("click", function (e) {
+                        const rect = myCanvas.getBoundingClientRect();
+                        const x = e.x - rect.left;
+                        const y = e.y - rect.top;
+
+                        if (x > 550 && x < 750 && y > 650 && y < 720 && jugador.vidas == 0) {
+                            jugador.vidas = 4;
+                            jugar = true;
+                            inicio = true;
+                            tiempo_Acumulado = 0;
+                            reiniciarJuego();
+                            pintar();
                         }
                     });
-
-                    //PINTAR PAREDES
-                    paredes.forEach(function (pared, i, array) {
-                        ctx.fillStyle = pared.color;
-                        ctx.fillRect(pared.x, pared.y, pared.ancho, pared.alto);
-                    });
-
-                    movimiento_Naves_Enemigas();
-
-                    //PINTAR MISILES DE JUGADOR CADA VEZ QUE DISPARA
-                    misiles_Jugador.forEach(function (misil, i, array) {
-                        ctx.fillStyle = misil.color;
-                        ctx.fillRect(misil.x, misil.y, misil.ancho, misil.alto);
-                        misil.y -= 7;
-                    });
-
-                    //PINTAR MISILES DE NAVE ENEMIGA CADA VEZ QUE DISPARA
-                    disparo_Nave_Enemiga();
-                    misiles_Naves_Enemigas.forEach(function (misil, i, array) {
-                        ctx.fillStyle = misil.color;
-                        ctx.fillRect(misil.x, misil.y, misil.ancho, misil.alto);
-                        misil.y += 7;
-                    });
-
-                    //VERIFICAR IMPACTO O COLISION DE MISIL DE JUGADOR CON NAVES ENEMIGAS
-                    naves_Enemigas.forEach(function (nave, i, array) {
-                        misiles_Jugador.forEach(function (misil, j, array) {
-                            if (misil.Colision(nave)) {
-                                nave.vida--;
-                                if (nave.vida <= 0) {
-                                    naves_Enemigas.splice(i, 1);
-                                }
-                                misiles_Jugador.splice(j, 1);
-                                if (naves_Enemigas.length == 0) {
-                                    if (dificultad > 1) {
-                                        dificultad -= 0.5;
-                                    } else {
-                                        dificultad -= 0.1;
-                                    }
-                                    crear_Naves_Enemigas();
-                                }
-                            }
-                        });
-                    });
-
-                    //VERIFICAR IMPACTO O COLISION DE MISIL DE NAVES ENEMIGAS CON JUGADOR
-                    misiles_Naves_Enemigas.forEach(function (misil, i, array) {
-                        if (misil.Colision(jugador)) {
-                            misiles_Naves_Enemigas.splice(i, 1);
-                            jugador.vidas--;
-                        }
-                    });
-
-                    //VERIFICAR IMPACTO O COLISION DE MISIL CON PAREDES
-                    misiles_Jugador.forEach(function (misil, i, array) {
-                        paredes.forEach(function (pared, j, array) {
-                            if (pared.Colision(misil)) {
-                                pared.resistencia--;
-                                if (pared.resistencia == 0) {
-                                    paredes.splice(j, 1);
-                                }
-                                misiles_Jugador.splice(i, 1);
-                            }
-                        });
-                    });
-
-                    misiles_Naves_Enemigas.forEach(function (misil, i, array) {
-                        paredes.forEach(function (pared, j, array) {
-                            if (pared.Colision(misil)) {
-                                pared.resistencia -= misil.daño;
-                                if (pared.resistencia <= 0) {
-                                    paredes.splice(j, 1);
-                                }
-                                misiles_Naves_Enemigas.splice(i, 1);
-                            }
-                        });
-                    });
-
-                    //VERIFICAR IMPACTO O COLISION DE NAVE ENEMIGA CON PAREDES
-                    naves_Enemigas.forEach(function (nave, i, array) {
-                        paredes.forEach(function (pared, j, array) {
-                            if (nave.Colision(pared)) {
-                                paredes.splice(j, 1);
-                                naves_Enemigas.splice(i, 1);
-                                if (naves_Enemigas.length == 0) {
-                                    if (dificultad > 1) {
-                                        dificultad -= 0.5;
-                                    } else {
-                                        dificultad -= 0.1;
-                                    }
-                                    crear_Naves_Enemigas();
-                                }
-                            }
-                        });
-                    });
-                    update();
-                    requestAnimationFrame(pintar);
                 }
             } else {
                 ctx.drawImage(portada, 0, 0, myCanvas.width, myCanvas.height);
                 ctx.fillStyle = "#d62727";
+                stats.innerHTML = `<h2>Stats:</h2>
+                                    <img src="nave.png" width="50" height="50">X${jugador.vidas}
+                                    <p>Tiempo:  ${formatoCronometro(tiempo_Acumulado)} </p>
+                                    <p>Score:  ${score} </p>`;
                 ctx.fillRect(550, 650, 200, 70);
                 ctx.fillStyle = "white";
                 ctx.font = "bold 30px 'Courier New', Courier, monospace";
@@ -353,7 +412,7 @@
                     const x = e.x - rect.left;
                     const y = e.y - rect.top;
 
-                    if (x > 550 && x < 750 && y > 650 && y < 720) {
+                    if (x > 550 && x < 750 && y > 650 && y < 720 && !jugar) {
                         jugar = true;
                         inicio = true;
                         pintar();
@@ -435,10 +494,12 @@
                     case 1:
                         misiles_Naves_Enemigas.push(new misil_Nave_Enemiga(
                             "red", (naves_Enemigas[nave_Id].x + 27), naves_Enemigas[nave_Id].y, 50, 7, 1));
+                        disparo_nave_I();
                         break;
                     case 2:
                         misiles_Naves_Enemigas.push(new misil_Nave_Enemiga(
                             "yellow", (naves_Enemigas[nave_Id].x + 27), naves_Enemigas[nave_Id].y, 50, 7, 2));
+                        disparo_nave_II();
                         break;
                 }
                 tiempo_Acumulado_Anterior = tiempo_Acumulado / 1000;
@@ -446,6 +507,7 @@
             if ((tiempo_Acumulado / 1000) - tiempo_Acumulado_Anterior_Tercera_Nave >= 2 * (dificultad / 0.4)) {
                 naves_Enemigas.push(new nave_Enemiga(3, 100, 30, 60, 60, 3));
                 misiles_Naves_Enemigas.push(new misil_Nave_Enemiga("black", 127, 80, 50, 7, 3));
+                disparo_nave_III();
                 tiempo_Acumulado_Anterior_Tercera_Nave = tiempo_Acumulado / 1000;
             }
         }
@@ -558,12 +620,11 @@
         let tiempo_Referencia = Date.now();
         let tiempo_Acumulado = 0;
         setInterval(() => {
-            let tiempo = document.getElementById("cronometro");
+            let tiempo = document.getElementById("stats");
             if (inicio) {
                 tiempo_Acumulado += Date.now() - tiempo_Referencia;
             }
             tiempo_Referencia = Date.now();
-            tiempo.innerHTML = "Tiempo: " + formatoCronometro(tiempo_Acumulado);
         }, 1000 / 60);
 
         function formatoCronometro(milisegundos) {
@@ -576,6 +637,50 @@
                 return (this + "").padStart(n, 0)
             }
             return m.ceros(2) + ":" + s.ceros(2);
+        }
+
+        function disparo_Jugador(){
+            var audio = new Audio("disparo.mp3");
+            audio.play();  
+        }
+
+        function disparo_nave_I(){
+            var audio = new Audio("disparo_Nave_I.mp3");
+            audio.volume = 0.5;
+            audio.play();  
+        }
+
+        function disparo_nave_II(){
+            var audio = new Audio("disparo_Nave_II.mp3");
+            audio.play();  
+        }
+
+        function disparo_nave_III(){
+            var audio = new Audio("disparo_Nave_III.mp3");
+            audio.play();  
+        }
+
+        function daño(){
+            var audio = new Audio("daño.mp3");
+            audio.play();  
+        }
+
+
+        function reiniciarJuego(){
+            jugador = new nave_Jugador(620, 700, 60, 60, 3);
+            misiles_Jugador = [];
+            misiles_Naves_Enemigas = [];
+            naves_Enemigas = [];
+            paredes = [];
+            direccion = '';
+            lado = "der"
+            dificultad = 3;
+            posicion_X_Inicial = 0;
+            tiempo_Acumulado_Anterior = 0;
+            tiempo_Acumulado_Anterior_Tercera_Nave = 0;
+            score = 0;
+            crear_Naves_Enemigas();
+            programar_Paredes();
         }
 
         requestAnimationFrame(pintar);
